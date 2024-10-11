@@ -3,20 +3,20 @@ package com.ae.todolistapp.ui.viewmodel
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.ae.todolistapp.repository.TaskRepository
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
-class AddTaskViewModel @Inject constructor(private val taskRepository: TaskRepository) : ViewModel() {
-
+class TaskDetailViewModel @Inject constructor(var taskRepository: TaskRepository) : ViewModel() {
     val taskDate = MutableLiveData<String>()
     val taskTime = MutableLiveData<String>()
 
@@ -27,30 +27,28 @@ class AddTaskViewModel @Inject constructor(private val taskRepository: TaskRepos
 
         datePicker.show(fragmentManager, "Date")
 
-        datePicker.addOnPositiveButtonClickListener { selection ->
+        datePicker.addOnPositiveButtonClickListener {
             val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            taskDate.value = dateFormat.format(selection)
+            taskDate.value = dateFormat.format(it)
         }
     }
 
     fun selectTime(fragmentManager: FragmentManager) {
         val timePicker = MaterialTimePicker.Builder()
             .setTitleText("Select Time")
-            .setTimeFormat(TimeFormat.CLOCK_24H) // Optionally, get this dynamically from preferences
+            .setTimeFormat(TimeFormat.CLOCK_24H)
             .build()
 
         timePicker.show(fragmentManager, "Time")
 
         timePicker.addOnPositiveButtonClickListener {
-            val formattedTime = String.format("%02d:%02d", timePicker.hour, timePicker.minute)
-            taskTime.value = formattedTime
+            taskTime.value = "${timePicker.hour}:${timePicker.minute}"
         }
     }
 
-    fun createTask(taskTitle: String, taskDate: String, taskTime: String) {
-        // Using viewModelScope to handle coroutine lifecycle
-        viewModelScope.launch {
-            taskRepository.createTask(taskTitle, taskDate, taskTime)
+    fun updateTask(taskId: Int, taskTitle: String, taskDate: String, taskTime: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            taskRepository.updateTask(taskId, taskTitle, taskDate, taskTime)
         }
     }
 }

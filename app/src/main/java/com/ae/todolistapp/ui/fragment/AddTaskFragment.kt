@@ -1,60 +1,79 @@
 package com.ae.todolistapp.ui.fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.ae.todolistapp.R
+import com.ae.todolistapp.databinding.FragmentAddTaskBinding
+import com.ae.todolistapp.ui.viewmodel.AddTaskViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [AddTaskFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+@AndroidEntryPoint
 class AddTaskFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var binding: FragmentAddTaskBinding
+    private val viewModel: AddTaskViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_add_task, container, false)
+    ): View {
+        // Set the status bar color
+        requireActivity().window.statusBarColor =
+            ContextCompat.getColor(requireContext(), R.color.white)
+
+        // Inflate the layout with data binding
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_add_task, container, false)
+        binding.addTaskFragment = this@AddTaskFragment
+        binding.addTaskToolbarTitle = "Add Task"
+
+
+        // Observe ViewModel LiveData for task date and time
+        setupObservers()
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AddTaskFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AddTaskFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    // Set up the observers for task date and time
+    private fun setupObservers() {
+        viewModel.taskDate.observe(viewLifecycleOwner) { date ->
+            binding.taskDate = date
+        }
+
+        viewModel.taskTime.observe(viewLifecycleOwner) { time ->
+            binding.taskTime = time
+        }
     }
+
+    // Navigate back to the previous screen
+    fun onBackPressed() {
+        requireActivity().onBackPressedDispatcher.onBackPressed()
+    }
+
+    // Select date using ViewModel's date picker logic
+    fun selectDate() {
+        viewModel.selectDate(requireActivity().supportFragmentManager)
+    }
+
+    // Select time using ViewModel's time picker logic
+    fun selectTime() {
+        viewModel.selectTime(requireActivity().supportFragmentManager)
+    }
+
+    // Create a task with provided title, date, and time
+    fun createTask(taskTitle: String, taskDate: String, taskTime: String) {
+        if (taskTitle.isNotBlank() && taskDate.isNotBlank() && taskTime.isNotBlank()) {
+            viewModel.createTask(taskTitle, taskDate, taskTime)
+            onBackPressed() // Navigate back after task creation
+        } else {
+            // Handle invalid input if needed (e.g., show a toast or error message)
+        }
+    }
+
 }

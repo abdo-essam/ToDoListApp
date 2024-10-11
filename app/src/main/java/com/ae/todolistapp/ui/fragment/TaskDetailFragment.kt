@@ -5,56 +5,77 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.navArgs
 import com.ae.todolistapp.R
+import com.ae.todolistapp.databinding.FragmentTaskDetailBinding
+import com.ae.todolistapp.model.Task
+import com.ae.todolistapp.repository.TaskRepository
+import com.ae.todolistapp.ui.viewmodel.TaskDetailViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [TaskDetailFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+@AndroidEntryPoint
 class TaskDetailFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private lateinit var binding: FragmentTaskDetailBinding
+    private val viewModel: TaskDetailViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    @Inject
+    lateinit var taskRepository: TaskRepository
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_task_detail, container, false)
+    ): View {
+        requireActivity().window.statusBarColor = ContextCompat.getColor(requireContext(), R.color.white)
+
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_task_detail, container, false)
+        binding.taskDetailFragment = this
+        binding.taskDetailToolbarTitle = "Task Detail"
+
+        val args: TaskDetailFragmentArgs by navArgs()
+        val task = args.task
+
+        binding.taskObject = task
+        binding.taskDate = task.taskDate
+        binding.taskTime = task.taskTime
+
+        viewModel.taskDate.observe(viewLifecycleOwner) {
+            binding.taskDate = it
+        }
+
+        viewModel.taskTime.observe(viewLifecycleOwner) {
+            binding.taskTime = it
+        }
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment TaskDetailFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            TaskDetailFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    fun onDeleteTaskClicked(task: Task) {
+        lifecycleScope.launch {
+            taskRepository.deleteTask(task)
+        }
+        onBackPressed()
+    }
+
+    fun onBackPressed() {
+        requireActivity().onBackPressedDispatcher.onBackPressed()
+    }
+
+    fun selectDate() {
+        viewModel.selectDate(requireActivity().supportFragmentManager)
+    }
+
+    fun selectTime() {
+        viewModel.selectTime(requireActivity().supportFragmentManager)
+    }
+
+    fun updateTask(taskId: Int, taskTitle: String, taskDate: String, taskTime: String) {
+        viewModel.updateTask(taskId, taskTitle, taskDate, taskTime)
+        onBackPressed()
     }
 }

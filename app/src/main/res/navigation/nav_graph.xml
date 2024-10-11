@@ -23,7 +23,14 @@
         android:id="@+id/taskDetailFragment"
         android:name="com.ae.todolistapp.ui.fragment.TaskDetailFragment"
         android:label="fragment_task_detail"
-        tools:layout="@layout/fragment_task_detail" />
+        tools:layout="@layout/fragment_task_detail" >
+        <argument
+            android:name="task"
+            app:argType="com.ae.todolistapp.model.Task" />
+
+    </fragment>
+
+
 
     <fragment
         android:id="@+id/addTaskFragment"

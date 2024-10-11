@@ -15,7 +15,4 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
     }
 
-    fun clickFab(view: View) {
-        Navigation.changePage(view, R.id.action_homePageFragment_to_addTaskFragment)
-    }
 }
